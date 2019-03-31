@@ -1,0 +1,8 @@
+# dist
+dist/
+
+# config
+src/modules/firebase/config.js
+
+# node_modules
+node_modules/

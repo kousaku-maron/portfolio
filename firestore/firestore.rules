@@ -1,0 +1,39 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	match /qiita_articles/{articleID} {
+    	allow read;
+    }
+    match /github_repositories/{repoID} {
+    	allow read;
+    }
+    match /rooms/{roomID} {
+    	function isRoomMember() {
+      	return request.auth != null &&
+        	request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomID)).data.members;
+    	}
+    
+    	allow read: if isRoomMember();
+      
+      match /messages/{messageID} {
+      	function isCollectMessage() {
+      		return request.resource.data.size() == 3 &&
+						request.resource.data.user is string &&
+						request.resource.data.message is string &&
+						request.resource.data.created_at is timestamp &&
+						request.resource.data.user == request.auth.uid;
+      	}
+        
+      	allow read: if isRoomMember();
+				allow create: if isRoomMember() && isCollectMessage();
+      }
+    }
+		match /users/{uid} {
+			function isUser() {
+				return request.auth != null &&
+					request.auth.uid == uid;
+			}
+
+			allow read: if isUser();
+		}
+  }
+}
